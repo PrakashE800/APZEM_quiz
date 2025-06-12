@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>APZEM Expo Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0b3d0b;
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #093109;
+    }
+    img.logo {
+      height: 50px;
+    }
+    main {
+      padding: 20px;
+      text-align: center;
+    }
+    .hidden {
+      display: none;
+    }
+    input, button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .question {
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin-left: 25%;
+      margin-right: 25%;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>APZEM Quiz</h2>
+  <img src="assets/apzem.png" class="logo" alt="APZEM Logo" />
+</header>
+
+<main>
+  <section id="formSection">
+    <h3>Enter Your Details</h3>
+    <input type="text" id="name" placeholder="Your Name" required><br>
+    <input type="text" id="company" placeholder="Company Name" required><br>
+    <input type="email" id="email" placeholder="Email ID" required><br>
+    <input type="tel" id="phone" placeholder="Phone Number" required><br>
+    <button onclick="startImage()">Start</button>
+  </section>
+
+  <section id="imageSection" class="hidden">
+    <h3>Look at this image carefully. Questions will follow.</h3>
+    <img src="assets/quiz_image.jpg" alt="Quiz Hint" style="max-width:100%; height:auto;">
+    <p>Time Remaining: <span id="timer">120</span> seconds</p>
+  </section>
+
+  <section id="quizSection" class="hidden">
+    <div id="quizContainer"></div>
+    <button onclick="submitQuiz()">Submit Quiz</button>
+  </section>
+
+  <section id="resultSection" class="hidden">
+    <h3>Your Score: <span id="scoreDisplay"></span>/10</h3>
+    <p id="winnerMessage"></p>
+    <p>Thank you for participating!</p>
+  </section>
+</main>
+
+<script>
+const questions = [
+  ["What is air pollution?", "b", ["Noise in the environment", "Contamination of air by harmful substances", "High oxygen levels", "Natural air movement"]],
+  ["Which of the following is a common source of industrial air pollution?", "b", ["Wind turbines", "Dust and fumes from manufacturing processes", "Rainwater harvesting", "Solar panels"]],
+  ["Which gas is a major contributor to air pollution?", "c", ["Oxygen", "Nitrogen", "Carbon monoxide", "Hydrogen"]],
+  ["Particulate Matter (PM) is commonly referred to as:", "c", ["Liquid waste", "Industrial noise", "Tiny dust particles in the air", "Chemical formula"]],
+  ["Which health problem is NOT directly caused by air pollution?", "c", ["Asthma", "Lung cancer", "Diabetes", "Respiratory infections"]],
+  ["What is the main risk of inhaling fine dust particles in a factory?", "b", ["Improved immunity", "Lung damage and breathing issues", "Increased energy", "Better sleep"]],
+  ["Fumes are usually formed by:", "c", ["Sweeping the floor", "Boiling water", "Evaporation of chemicals during high-temperature processes like welding", "Running fans"]],
+  ["Which device is used to remove dust from the air in an industrial setup?", "b", ["Air conditioner", "Dust collector", "Generator", "Exhaust fan"]],
+  ["Which of the following is a method used to capture fumes?", "b", ["Water sprayer", "Fume extractor with filter", "Air heater", "Conveyor system"]],
+  ["Why is it important to control industrial dust and fumes?", "c", ["To reduce production cost", "To keep machines clean", "To protect worker health and meet pollution norms", "To improve internet speed"]]
+];
+
+function startImage() {
+  document.getElementById('formSection').classList.add('hidden');
+  document.getElementById('imageSection').classList.remove('hidden');
+  let timer = 120;
+  const interval = setInterval(() => {
+    timer--;
+    document.getElementById('timer').textContent = timer;
+    if (timer <= 0) {
+      clearInterval(interval);
+      startQuiz();
+    }
+  }, 1000);
+}
+
+function startQuiz() {
+  document.getElementById('imageSection').classList.add('hidden');
+  document.getElementById('quizSection').classList.remove('hidden');
+  const container = document.getElementById('quizContainer');
+  questions.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.classList.add('question');
+    div.innerHTML = `<p>${i+1}. ${q[0]}</p>` +
+      q[2].map((opt, idx) =>
+        `<label><input type="radio" name="q${i}" value="${String.fromCharCode(97+idx)}"> ${opt}</label>`
+      ).join('');
+    container.appendChild(div);
+  });
+}
+
+function submitQuiz() {
+  let score = 0;
+  questions.forEach((q, i) => {
+    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+    if (selected && selected.value === q[1]) score++;
+  });
+  document.getElementById('quizSection').classList.add('hidden');
+  document.getElementById('resultSection').classList.remove('hidden');
+  document.getElementById('scoreDisplay').textContent = score;
+  if (score >= 8) {
+    document.getElementById('winnerMessage').textContent = "🎉 You won! Please collect your prize.";
+  }
+
+  // Send to Google Sheet
+  fetch("https://script.google.com/macros/s/AKfycbxBVbIyr5uemWc87MLwPAg0wNVzZk70SIyCIVoV7GeJcoGPIJ1dBci8si2qq0_tY3Ec/exec", {
+    method: "POST",
+    body: new URLSearchParams({
+      name: document.getElementById("name").value,
+      company: document.getElementById("company").value,
+      email: document.getElementById("email").value,
+      phone: document.getElementById("phone").value,
+      score: score
+    })
+  });
+}
+</script>
+
+</body>
+</html>
